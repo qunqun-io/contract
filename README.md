@@ -1,2 +1,2 @@
-# token
-ERC20 Contract
+# QunQun
+QunQun ERC20 Contract
