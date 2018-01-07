@@ -12,7 +12,7 @@ QunQun is a blockchain-based incentive community platform. People can create the
 
 
 ## 联系我们
-官网:https://qunqun.io  
+官网：https://qunqun.io  
 邮箱：contact@qunqun.io
 
 Telegram：https://t.me/qunqun_io  
