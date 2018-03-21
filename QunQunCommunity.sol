@@ -49,7 +49,8 @@ contract QunQunCommunity is ERC721 {
     uint256 public exchangeFeePercent = 5; //sale Community fee
     address public lotteryContractAddress;
     address public contractOwner;
-
+    
+    mapping (address => uint256) public managers;
     mapping (bytes32 => Community) public communities; //community list, site name as key
     mapping (uint256 => bytes32) public idNameMap;
     mapping (uint256 => Lottery) public lotteryInfo; //round => luckyNumber
@@ -58,7 +59,13 @@ contract QunQunCommunity is ERC721 {
     
     function QunQunCommunity() public{
         contractOwner = msg.sender;
+        managers[msg.sender] = 1;
         lastBlockNumber = block.number;
+    }
+    
+    modifier onlyManager(){
+        require(managers[msg.sender] == 1);
+        _;
     }
     
     modifier onlyContractOwner(){
@@ -70,9 +77,9 @@ contract QunQunCommunity is ERC721 {
      * because the high cost of miner fee
      * change the qualification of create site to a lottery game
     */
-    function lottery(uint256 _round, uint256 _num) onlyContractOwner public returns(uint256 luckyNumber){
+    function lottery(uint256 _round, uint256 _num) onlyManager public returns(uint256 luckyNumber){
         require(block.number - lastBlockNumber >= blockInterval);
-        require(_round > lastLotteryRound); //require _round not replicate
+        require(lotteryInfo[_round].totalNum == 0); //require _round not replicate
         Random random = Random(lotteryContractAddress);
         luckyNumber = random.random(_num);
         // save lucky number
@@ -89,7 +96,7 @@ contract QunQunCommunity is ERC721 {
     /**
     * set community info
     */
-    function setUp(uint256 _round, string _name, address _owner) onlyContractOwner public returns (bool success) {
+    function setUp(uint256 _round, string _name, address _owner) onlyManager public returns (bool success) {
         // judge qualification
         require(lotteryInfo[_round].luckyNumber > 0 && lotteryInfo[_round].status == 0);
         require(bytes(_name).length <= 64);
@@ -118,7 +125,7 @@ contract QunQunCommunity is ERC721 {
         return true;
     }
     
-    function setExtendInfo(string _name, string _info) onlyContractOwner public returns (bool){
+    function setExtendInfo(string _name, string _info) onlyManager public returns (bool){
         communities[keccak256(_name)].infoUrl = _info;
         return true;
     }
@@ -152,7 +159,7 @@ contract QunQunCommunity is ERC721 {
         return communities[idNameMap[_tokenId]].owner;
     }
     
-    function transfer(address _to, uint256 _tokenId) onlyContractOwner external{
+    function transfer(address _to, uint256 _tokenId) onlyManager external{
         require(_to != address(0));
         bytes32 nameHash = idNameMap[_tokenId];
         require(nameHash != bytes32(0));
@@ -194,6 +201,16 @@ contract QunQunCommunity is ERC721 {
     
     function changeLotteryContractAddress(address newContractAddress) onlyContractOwner public returns (bool){
         lotteryContractAddress = newContractAddress;
+        return true;
+    }
+    
+    function addManager(address _manager) onlyContractOwner public returns (bool){
+        managers[_manager] = 1;
+        return true;
+    }
+    
+    function delManager(address _manager) onlyContractOwner public returns (bool){
+        managers[_manager] = 0;
         return true;
     }
 
